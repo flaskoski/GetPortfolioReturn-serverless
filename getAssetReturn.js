@@ -16,7 +16,7 @@ const event = {
             "asset": "VALE3",
             "shares_number": 100,
             "price": 85.0,
-            "type": "BUY"
+            "type": "SELL"
         },
         {
             "date": [
@@ -44,7 +44,7 @@ const event = {
             "date": [
                 2020,
                 10,
-                10
+                13
             ],
             "asset": "VALE3",
             "shares_number": 100,
@@ -78,24 +78,27 @@ checkDefined(code, "code");
 //exports.main =  function(event, context, callback) {
 function main(event, context, callback) {
     const API_KEY = process.env.ALPHA_API_KEY
-    var outputSize = "compact"
     
     for(let key in event)
     console.info(`event[${key}]: ${event[key]}`);
     
     
+    checkDefined(event["transactions"], "transactions");
+    checkDefined(event["startDate"], "startDate");
+    checkDefined(event["endDate"], "endDate");
+    console.log("startDate:", event["startDate"]);
+    console.log("endDate:", event["endDate"]);
+
     const transactions = event["transactions"];
     const startDate = new Date(event["startDate"] + " 15:00");
-    console.log(startDate, event["startDate"]);
     const endDate = new Date(event["endDate"] + " 15:00");
-    checkDefined(transactions, "transactions");
-    checkDefined(startDate, "startDate");
-    checkDefined(endDate, "endDate");
     
+    var outputSize = getOutputSize(startDate, endDate);
     
     let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&outputsize="+ outputSize +"&symbol="+ code +".SA&apikey="+ API_KEY
     var quote = {}
     
+    console.log("GET request:", url);
     https.get(url, (res) => {
         var body = '';
         res.on('data', function(chunk){
@@ -122,15 +125,25 @@ function getTransactionsFromDay(transactions, date, beforeDateToo){
 function sumTransactionsFromDay(totals, transactions, currentQuote, date, beforeDateToo){
     let transactionsFromDay = getTransactionsFromDay(transactions, date, beforeDateToo)
     transactionsFromDay.forEach(t =>{
-        totals.shares += t.shares_number;
-        totals.cost += t.price * t.shares_number;
+        console.log("New transaction:", t.date, t.type, t.shares_number, t.asset, "$"+t.price);
+        if(t.type == "BUY"){
+            totals.shares += t.shares_number;
+            totals.cost += t.price * t.shares_number;
+        }else{
+            let soldSharesCost = t.shares_number * (totals.cost)/(totals.shares);
+            totals.profit += t.price * t.shares_number - soldSharesCost;
+            totals.cost -= soldSharesCost;
+            totals.shares -= t.shares_number;
+        }
+        console.log("Avg. Cost:",totals.cost/totals.shares);
+        console.log("Number of Shares:",totals.shares);
     })
-    if(totals.shares > 0){
+    if(totals.cost > 0)
         totals.return = currentQuote / (totals.cost/totals.shares);
-        console.log("newTransactions avg cost:",totals.cost/totals.shares);
-        console.log("newTransactions return:", totals.return);
-    }
-    return transactionsFromDay;
+    // console.log("Avg cost:",totals.cost/totals.shares);
+    // console.log("Return:", totals.return);
+    
+    return totals;
 }
 
 function calculateDailyReturns(transactions, startDate, endDate, quotes){
@@ -140,11 +153,11 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
             startDate = day;
         else break;
 
-    lastDayValue = quotes[dateToString(startDate)]["5. adjusted close"];
+    let todayValue = quotes[dateToString(startDate)]["5. adjusted close"];
 
     //--get totals from all transactions made before and on start date
-    let totals = {shares: 0, cost: 0, return: 1};
-    sumTransactionsFromDay(totals, transactions, lastDayValue, startDate, true)
+    let totals = {shares: 0, cost: 0.0, return: 1.0, profit: 0.0}
+    sumTransactionsFromDay(totals, transactions, todayValue, startDate, true)
     
 
     var assetDailyValues = {};
@@ -157,24 +170,13 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
         todayValue = quotes[dateToString(day).toString()]["5. adjusted close"];
         // console.log("-----DAY:", day, "------ daily close:", todayValue);
 
-        //--get transactions made on the day
-        let newTransactionsTotals = {shares: 0, cost: 0, return: 1}
-        let transactionsToday = sumTransactionsFromDay(newTransactionsTotals, transactions, todayValue, day, false)
-        
-        //--get totals considering the new day
-        let todaysReturn = todayValue/lastDayValue;
-        totals.return = ( (totals.return*totals.shares) * todaysReturn  
-                                +  newTransactionsTotals.shares*newTransactionsTotals.return )
-                /  (totals.shares + newTransactionsTotals.shares);
-        totals.shares += newTransactionsTotals.shares;
-        totals.cost += newTransactionsTotals.cost;
-
+        //--calculate values considering transactions made on the day
+        totals = sumTransactionsFromDay(totals, transactions, todayValue, day, false)
         assetDailyValues[dateToString(day)] = totals;
-        // console.log("Cumulative return:", totals.return);
-        // console.log("Total shares:", totals.shares);
-        
-        lastDayValue = todayValue;
     }
+    console.log("Total Return:", totals.return);
+    console.log("Total Shares:", totals.shares);
+    console.log("Total Profit:", totals.profit);
 }
 
 function toDate(d){
@@ -184,7 +186,11 @@ function dateToString(d){
     d.setHours(15);
     return dateFormat(d, "yyyy-mm-dd")
 }
-
+function getOutputSize(startDate, endDate){
+    if( (new Date().getTime() - startDate.getTime()) / (1000 * 3600 * 24) < 100 )
+        return "compact";
+    return "full";
+}
 
 main(event)
 
