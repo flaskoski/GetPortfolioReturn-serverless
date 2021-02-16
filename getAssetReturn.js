@@ -1,69 +1,8 @@
 const https = require('https')
-// const AWS = require('aws-sdk');
 var dateFormat = require("dateformat");
-// const dynamoDb = new AWS.DynamoDB.DocumentClient();
-const event = {
-    code: "VALE3",
-    startDate: "2020-12-20",
-    endDate: "2021-1-20",
-    transactions:  [
-        {
-            "date": [
-                2020,
-                12,
-                30
-            ],
-            "asset": "VALE3",
-            "shares_number": 100,
-            "price": 85.0,
-            "type": "SELL"
-        },
-        {
-            "date": [
-                2020,
-                12,
-                29
-            ],
-            "asset": "VALE3",
-            "shares_number": 100,
-            "price": 60.2,
-            "type": "BUY"
-        },
-        {
-            "date": [
-                2020,
-                11,
-                20
-            ],
-            "asset": "VALE3",
-            "shares_number": 100,
-            "price": 100.0,
-            "type": "BUY"
-        },
-        {
-            "date": [
-                2020,
-                10,
-                13
-            ],
-            "asset": "VALE3",
-            "shares_number": 100,
-            "price": 90.0,
-            "type": "BUY"
-        },
-        {
-            "date": [
-                2020,
-                9,
-                27
-            ],
-            "asset": "PETR4",
-            "shares_number": 100,
-            "price": 21.0,
-            "type": "BUY"
-        }
-    ]
-}
+const AWS = require('aws-sdk');
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
+ 
 // Helper function used to validate input
 function checkDefined(reference, referenceName) {
     if (!reference) {
@@ -72,23 +11,21 @@ function checkDefined(reference, referenceName) {
     return reference;
 }
 
-const code = event["code"];
-checkDefined(code, "code");
-
-//exports.main =  function(event, context, callback) {
-function main(event, context, callback) {
+var code ='';
+// function main(event, context, callback) {
+exports.main =  function(event, context, callback) {
     const API_KEY = process.env.ALPHA_API_KEY
     
-    for(let key in event)
-    console.info(`event[${key}]: ${event[key]}`);
-    
-    
+    // for(let key in event)
+    //     console.info(`event[${key}]: ${event[key]}`);
+    checkDefined(event["code"], "code");
     checkDefined(event["transactions"], "transactions");
     checkDefined(event["startDate"], "startDate");
     checkDefined(event["endDate"], "endDate");
     console.log("startDate:", event["startDate"]);
     console.log("endDate:", event["endDate"]);
 
+    code = event["code"];
     const transactions = event["transactions"];
     const startDate = new Date(event["startDate"] + " 15:00");
     const endDate = new Date(event["endDate"] + " 15:00");
@@ -96,7 +33,6 @@ function main(event, context, callback) {
     var outputSize = getOutputSize(startDate, endDate);
     
     let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&outputsize="+ outputSize +"&symbol="+ code +".SA&apikey="+ API_KEY
-    var quote = {}
     
     console.log("GET request:", url);
     https.get(url, (res) => {
@@ -105,12 +41,15 @@ function main(event, context, callback) {
             body += chunk;
         });
         res.on('end', function(){
-            quotes = JSON.parse(body)['Time Series (Daily)'];
-            console.log("Got a response: ", quotes['2021-02-12']);
-            
-            calculateDailyReturns(transactions, startDate, endDate, quotes)
-            
-            // callback(null, quotes)
+            let quotes = JSON.parse(body)['Time Series (Daily)'];
+            if(quotes){
+                const response = {
+                    statusCode: 200,
+                    body: JSON.stringify(calculateDailyReturns(transactions, startDate, endDate, quotes))
+                };
+                callback(null, response)
+            }
+            else callback(Error("Could not get quotes from", code))
         });  
     }).on('error', (e) => {
         callback(Error(e))
@@ -177,6 +116,7 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
     console.log("Total Return:", totals.return);
     console.log("Total Shares:", totals.shares);
     console.log("Total Profit:", totals.profit);
+    return assetDailyValues;
 }
 
 function toDate(d){
@@ -192,49 +132,7 @@ function getOutputSize(startDate, endDate){
     return "full";
 }
 
-main(event)
-
-// 'use strict';
-
-// const http = require('http');
-// const API_KEY = "OC8AZHP6EZ0ABFIW" //TODO 
-// //API_KEY = "<<<ADD API KEY HERE>>>"
-
-// module.exports.main = async (event) => {
-//   let code = event["code"];
-//   let outputSize = 'compact';
-//   for (let key in event){
-//     console.info(`${key}: ${event[key]}`);
-//   }
-//   var body = '';
-//   //http.get('http://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&outputsize='+outputSize+'&symbol='+code+'.SA&apikey='+API_KEY, function(res){
-//     http.get('http://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&outputsize=compact&symbol=PETR4.SA&apikey=OC8AZHP6EZ0ABFIW', function(res){
-
-//       res.on('data', function(chunk){
-//         body += chunk;
-//       });
-
-//       res.on('end', getData())
-//   }).on('error', function(e){
-//         console.log("Got an error: ", e);
-//         return {
-//           statusCode: 500,
-//           body: JSON.stringify(
-//             {
-//               message: 'Serverless. Error!',
-//               output: "500",
-//             },
-//             null,
-//             2
-//           ),
-//         };
-//   });
-
-//   function getData(chunk){
 //     var quote = JSON.parse(body);
-//     console.log("Got a response: ", quote);
-
-//     console.info("'time series' request received for code:" + code);
 //     return {
 //       statusCode: 200,
 //       body: JSON.stringify(
@@ -246,9 +144,6 @@ main(event)
 //         2
 //       ),
 //     };
-//   }
-
-
 
 // Use this code if you don't use the http event with the LAMBDA-PROXY integration
 // return { message: 'Go Serverless v1.0! Your function executed successfully!', event };

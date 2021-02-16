@@ -16,13 +16,13 @@ provider:
 #  stage: dev
   region: sa-east-1
   profile: serverless-admin
-  vpc:
-    securityGroupIds:
-      - sg-e3309b92
-    subnetIds: 
-      - subnet-f678f4bf
-      - subnet-9b79f7fd
-      - subnet-58910503
+  # vpc:
+  #   securityGroupIds:
+  #     - sg-e3309b92
+  #   subnetIds: 
+  #     - subnet-f678f4bf
+  #     - subnet-9b79f7fd
+  #     - subnet-58910503
   environment:
     DAILY_RETURN_TABLE: dailyreturn-${opt:stage, self:provider.stage}
     ALPHA_API_KEY: ${ssm:/ALPHA_API_KEY~true}
@@ -65,6 +65,12 @@ functions:
     handler: main.main
   getAssetReturn:
     handler: getAssetReturn.main
+    timeout: 3
+    # events:
+    # - http:
+    #     path: getAssetReturn
+    #     method: post
+    #     cors: true
 
 resources:
   Resources:

@@ -2,5 +2,8 @@
 node_modules
 jspm_packages
 
+# package files
+package-lock.json
+
 # Serverless directories
 .serverless
