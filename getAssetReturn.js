@@ -24,7 +24,7 @@ exports.main =  function(event, context, callback) {
     checkDefined(event["endDate"], "endDate");
     console.log("startDate:", event["startDate"]);
     console.log("endDate:", event["endDate"]);
-
+    console.log("Number Transactions:", event["transactions"].length)
     code = event["code"];
     const transactions = event["transactions"];
     const startDate = new Date(event["startDate"] + " 15:00");
@@ -43,9 +43,11 @@ exports.main =  function(event, context, callback) {
         res.on('end', function(){
             let quotes = JSON.parse(body)['Time Series (Daily)'];
             if(quotes){
+                let item = saveValues(code, callback, 
+                    calculateDailyReturns(transactions, startDate, endDate, quotes) )
                 const response = {
                     statusCode: 200,
-                    body: JSON.stringify(calculateDailyReturns(transactions, startDate, endDate, quotes))
+                    body: JSON.stringify(item)
                 };
                 callback(null, response)
             }
@@ -56,15 +58,65 @@ exports.main =  function(event, context, callback) {
     })
 }
 
-function getTransactionsFromDay(transactions, date, beforeDateToo){
-    return transactions.filter(t => t.asset == code && 
-        (beforeDateToo? toDate(t.date).getTime() <= date.getTime() : toDate(t.date).getTime() == date.getTime()) );
+function saveValues(code, callback, values){
+    //const timestamp = new Date().getTime();
+    // const params = {
+    //     TableName: process.env.DAILY_RETURN_TABLE,
+    //     Item: {
+    //         id: uuid(),
+    //         assetCode: code,
+    //         assetValues: values,
+    //         createdAt: timestamp,
+    //         updatedAt: timestamp,
+    //     },
+    // };
+
+    const params = {
+        TableName: process.env.DAILY_RETURN_TABLE,
+        Key: {
+            'id': 'flaskoski',            
+            'assetCode': code
+        },
+        ExpressionAttributeNames: {
+            '#value': 'assetValues',
+        },
+        ExpressionAttributeValues: {
+            ':val': values,
+            ':updatedAt':  new Date().getTime()
+        },
+        UpdateExpression: 'SET #value = :val, updatedAt = :updatedAt',
+        ReturnValues: 'ALL_NEW',
+      };
+
+    // write the todo to the database
+    // dynamoDb.put(params, (error) => {
+    dynamoDb.update(params, (error, result) => {
+        // handle potential errors
+        if (error) {
+            console.error(error);
+            callback(null, {
+                statusCode: error.statusCode || 501,
+                headers: { 'Content-Type': 'text/plain' },
+                body: 'Couldn\'t save the totals for asset '+ code,
+            });
+            return;
+        }
+        return result.Attributes;
+    })
+    // return params.Item;
+    return params.Key;
 }
 
-function sumTransactionsFromDay(totals, transactions, currentQuote, date, beforeDateToo){
-    let transactionsFromDay = getTransactionsFromDay(transactions, date, beforeDateToo)
+function getTransactionsFromDay(transactions, date, beforeDate){
+    return transactions.filter(t => t.asset == code && 
+        (beforeDate? toDate(t.date).getTime() < date.getTime() : toDate(t.date).getTime() == date.getTime()) )
+        .sort((a, b) => toDate(a.date).getTime() - toDate(b.date).getTime() )
+}
+
+function sumTransactionsFromDay(totals, transactions, currentQuote, date, beforeDate){
+    let transactionsFromDay = getTransactionsFromDay(transactions, date, beforeDate)
     transactionsFromDay.forEach(t =>{
-        console.log("New transaction:", t.date, t.type, t.shares_number, t.asset, "$"+t.price);
+        console.log("New transaction:", t.date, t.type, t.shares_number, t.asset, "$"+t.price)
         if(t.type == "BUY"){
             totals.shares += t.shares_number;
             totals.cost += t.price * t.shares_number;
@@ -74,11 +126,12 @@ function sumTransactionsFromDay(totals, transactions, currentQuote, date, before
             totals.cost -= soldSharesCost;
             totals.shares -= t.shares_number;
         }
-        console.log("Avg. Cost:",totals.cost/totals.shares);
-        console.log("Number of Shares:",totals.shares);
+        if(totals.shares > 0) console.log("Avg. Cost:",totals.cost/totals.shares)
+        console.log("Number of Shares:",totals.shares)
     })
     if(totals.cost > 0)
         totals.return = currentQuote / (totals.cost/totals.shares);
+    else totals.return = 1;
     // console.log("Avg cost:",totals.cost/totals.shares);
     // console.log("Return:", totals.return);
     
@@ -88,7 +141,7 @@ function sumTransactionsFromDay(totals, transactions, currentQuote, date, before
 function calculateDailyReturns(transactions, startDate, endDate, quotes){
     //--skip weekend/holidays
     for(let day = startDate; day <= endDate; day.setDate(day.getDate() + 1))
-        if(!quotes[dateToString(day).toString()])
+        if(!quotes[dateToString(day)])
             startDate = day;
         else break;
 
@@ -100,7 +153,7 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
     
 
     var assetDailyValues = {};
-    for(let day = startDate; day <= endDate; day.setDate(day.getDate() + 1)){
+    for(let day = startDate ; day <= endDate; day.setDate(day.getDate() + 1)){
         //--if its weekend/holiday
         if(!quotes[dateToString(day).toString()])
             continue;
@@ -111,7 +164,7 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
 
         //--calculate values considering transactions made on the day
         totals = sumTransactionsFromDay(totals, transactions, todayValue, day, false)
-        assetDailyValues[dateToString(day)] = totals;
+        assetDailyValues[dateToString(day)] = {...totals};
     }
     console.log("Total Return:", totals.return);
     console.log("Total Shares:", totals.shares);
