@@ -155,11 +155,11 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
     var assetDailyValues = {};
     for(let day = startDate ; day <= endDate; day.setDate(day.getDate() + 1)){
         //--if its weekend/holiday
-        if(!quotes[dateToString(day).toString()])
+        if(!quotes[dateToString(day)])
             continue;
 
         //--get the closed quote of the day
-        todayValue = quotes[dateToString(day).toString()]["5. adjusted close"];
+        todayValue = quotes[dateToString(day)]["5. adjusted close"];
         // console.log("-----DAY:", day, "------ daily close:", todayValue);
 
         //--calculate values considering transactions made on the day
