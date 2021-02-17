@@ -22,7 +22,7 @@ Returns an array with `{cost, profit, return}` for each day in the period betwee
 
 1. getassetReturn: Get the return of a specific asset considering the given `transactions`
 
-# Parameters
+#### Parameters
 
 * code: Asset's code
 * startDate
