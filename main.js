@@ -5,22 +5,26 @@ const utils = require('utils');
 
 module.exports.main = function(event, context, callback){
 
-    utils.checkDefined(event["startDate"], "startDate");
-    utils.checkDefined(event["endDate"], "endDate");
-    console.log("startDate:", event["startDate"]);
-    console.log("endDate:", event["endDate"]);
-    const dates =  {
-        start: new Date(event["startDate"] + " 15:00"),
-        end: new Date(event["endDate"] + " 15:00")
+    try{
+        utils.checkDefined(event["body"], "body");
+        event = JSON.parse(event["body"])
+        utils.checkDefined(event["startDate"], "startDate");
+        utils.checkDefined(event["endDate"], "endDate");
+        console.log("startDate:", event["startDate"]);
+        console.log("endDate:", event["endDate"]);
+        const dates =  {
+            start: new Date(event["startDate"] + " 15:00"),
+            end: new Date(event["endDate"] + " 15:00")
+        }
+        getValues(callback, dates)
+   
+    }catch(exception){
+        var response = {
+            statusCode: 400,
+            body: JSON.stringify(exception),
+        };
+        callback(null, response);
     }
-
-    //SumProductOf(shares, return)  (1.08 * 200 + 1.002 * 100 ) / sum of Shares
-    
-    getValues(callback, dates)
-    
-
-// Use this code if you don't use the http event with the LAMBDA-PROXY integration
-// return { message: 'Go Serverless v1.0! Your function executed successfully!', event };
 };
 
 function getValues(callback, dates){

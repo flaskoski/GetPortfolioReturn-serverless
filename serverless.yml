@@ -11,6 +11,20 @@ provider:
   name: aws
   runtime: nodejs12.x
   lambdaHashingVersion: 20201221
+  apiGateway:
+    shouldStartNameWithService: true
+    apiKeys:
+      - ${self:service}-${opt:stage, self:provider.stage}
+        #description: Api key description # Optional
+    usagePlan:
+      quota:
+        limit: 5000
+        offset: 2
+        period: MONTH
+      throttle:
+        burstLimit: 100
+        rateLimit: 30
+    
 
 # you can overwrite defaults here
 #  stage: dev
@@ -63,14 +77,21 @@ provider:
 functions:
   main:
     handler: main.main
+    events:
+      - http:
+          path: portfolioReturn
+          method: post
+          cors: true
+          private: true
   getAssetReturn:
     handler: getAssetReturn.main
     timeout: 3
-    # events:
-    # - http:
-    #     path: getAssetReturn
-    #     method: post
-    #     cors: true
+    events:
+      - http:
+          path: assetReturn
+          method: post
+          cors: true
+          private: true
 
 resources:
   Resources:

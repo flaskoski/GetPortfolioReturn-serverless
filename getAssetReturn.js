@@ -15,9 +15,13 @@ var code ='';
 // function main(event, context, callback) {
 exports.main =  function(event, context, callback) {
     const API_KEY = process.env.ALPHA_API_KEY
-    
     // for(let key in event)
     //     console.info(`event[${key}]: ${event[key]}`);
+    checkDefined(event["body"], "body");
+    event = JSON.parse(event["body"]);
+    console.info(`body: ${event}`);
+    // console.info(`body.code: ${event.code}`);
+    console.info(`event.code: ${event["code"]}`);
     checkDefined(event["code"], "code");
     checkDefined(event["transactions"], "transactions");
     checkDefined(event["startDate"], "startDate");

@@ -3,16 +3,19 @@
 ## AWS Products Used
 
 * Lambda
+* CloudFormation
 * SSM Parameter Store
 * IAM
 * DynamoDB
+* API Gateway
 
 ## Functions
 
-### Main: get the total return of the portfolio of investments found in the DynamoDB table for a specific user
+### Main 
+
+Get the total return of the portfolio of investments found in the DynamoDB table for a specific user
 
 #### Parameters
-
 * startDate
 * endDate
 
@@ -20,7 +23,9 @@
 
 Returns an array with `{cost, profit, return}` for each day in the period between `startDate` and `endDate`.
 
-### getassetReturn: Get the return of a specific asset considering the given `transactions`
+### getassetReturn
+
+Get the return of a specific asset considering the given `transactions`
 
 #### Parameters
 
