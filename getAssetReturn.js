@@ -51,6 +51,10 @@ exports.main =  function(event, context, callback) {
                     calculateDailyReturns(transactions, startDate, endDate, quotes) )
                 const response = {
                     statusCode: 200,
+                    headers: {
+                        'Access-Control-Allow-Origin': '*',
+                        'Access-Control-Allow-Credentials': true,
+                      },
                     body: JSON.stringify(item)
                 };
                 callback(null, response)
@@ -100,7 +104,10 @@ function saveValues(code, callback, values){
             console.error(error);
             callback(null, {
                 statusCode: error.statusCode || 501,
-                headers: { 'Content-Type': 'text/plain' },
+                headers: { 'Content-Type': 'text/plain' ,
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Credentials': true,
+                },
                 body: 'Couldn\'t save the totals for asset '+ code,
             });
             return;
