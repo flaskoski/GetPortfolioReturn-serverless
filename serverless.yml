@@ -82,7 +82,7 @@ functions:
           path: portfolioReturn
           method: post
           cors: true
-          private: true
+          private: true #require clients with API KEY
   getAssetReturn:
     handler: getAssetReturn.main
     timeout: 3

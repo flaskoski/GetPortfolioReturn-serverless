@@ -21,6 +21,7 @@ module.exports.main = function(event, context, callback){
     }catch(exception){
         var response = {
             statusCode: 400,
+            headers: {'Access-Control-Allow-Origin': '*'},
             body: JSON.stringify(exception),
         };
         callback(null, response);
@@ -52,6 +53,7 @@ function getValues(callback, dates){
 
         var response = {
             statusCode: 200,
+            headers: {'Access-Control-Allow-Origin': '*'},
             body: JSON.stringify(
                 allTotals
             ),
