@@ -1,0 +1,189 @@
+{ 
+    "body" : {
+        "code": "BBAS3",
+        "startDate": "2020-02-19",
+        "endDate": "2021-02-26",
+        "transactions": [
+            {
+                "id": 266,
+                "date": [
+                    2020,
+                    11,
+                    27
+                ],
+                "asset": "BBAS3",
+                "shares_number": null,
+                "price": 39.0,
+                "type": "DIVIDEND"
+            },
+            {
+                "id": 267,
+                "date": [
+                    2020,
+                    11,
+                    27
+                ],
+                "asset": "BBAS3",
+                "shares_number": null,
+                "price": 50.0,
+                "type": "JCP"
+            },
+            {
+                "id": 265,
+                "date": [
+                    2020,
+                    9,
+                    30
+                ],
+                "asset": "BBAS3",
+                "shares_number": null,
+                "price": 17.5,
+                "type": "DIVIDEND"
+            },
+            {
+                "id": 264,
+                "date": [
+                    2020,
+                    8,
+                    31
+                ],
+                "asset": "BBAS3",
+                "shares_number": null,
+                "price": 74.91,
+                "type": "DIVIDEND"
+            },
+            {
+                "id": 108,
+                "date": [
+                    2020,
+                    5,
+                    28
+                ],
+                "asset": "BBAS3",
+                "shares_number": 100,
+                "price": 30.45,
+                "type": "BUY"
+            },
+            {
+                "id": 107,
+                "date": [
+                    2020,
+                    5,
+                    25
+                ],
+                "asset": "BBAS3",
+                "shares_number": 100,
+                "price": 31.06,
+                "type": "SELL"
+            },
+            {
+                "id": 106,
+                "date": [
+                    2020,
+                    3,
+                    18
+                ],
+                "asset": "BBAS3",
+                "shares_number": 100,
+                "price": 28.02,
+                "type": "BUY"
+            },
+            {
+                "id": 263,
+                "date": [
+                    2020,
+                    3,
+                    5
+                ],
+                "asset": "BBAS3",
+                "shares_number": null,
+                "price": 37.28,
+                "type": "DIVIDEND"
+            },
+            {
+                "id": 268,
+                "date": [
+                    2020,
+                    1,
+                    18
+                ],
+                "asset": "BBAS3",
+                "shares_number": null,
+                "price": 50.0,
+                "type": "JCP"
+            },
+            {
+                "id": 105,
+                "date": [
+                    2019,
+                    10,
+                    9
+                ],
+                "asset": "BBAS3",
+                "shares_number": 100,
+                "price": 43.99,
+                "type": "SELL"
+            },
+            {
+                "id": 104,
+                "date": [
+                    2019,
+                    10,
+                    8
+                ],
+                "asset": "BBAS3",
+                "shares_number": 100,
+                "price": 43.77,
+                "type": "BUY"
+            },
+            {
+                "id": 262,
+                "date": [
+                    2019,
+                    6,
+                    21
+                ],
+                "asset": "BBAS3",
+                "shares_number": null,
+                "price": 121.0,
+                "type": "DIVIDEND"
+            },
+            {
+                "id": 103,
+                "date": [
+                    2019,
+                    3,
+                    27
+                ],
+                "asset": "BBAS3",
+                "shares_number": 100,
+                "price": 46.42,
+                "type": "BUY"
+            },
+            {
+                "id": 102,
+                "date": [
+                    2019,
+                    2,
+                    4
+                ],
+                "asset": "BBAS3",
+                "shares_number": 100,
+                "price": 52.33,
+                "type": "SELL"
+            },
+            {
+                "id": 101,
+                "date": [
+                    2019,
+                    1,
+                    16
+                ],
+                "asset": "BBAS3",
+                "shares_number": 100,
+                "price": 49.11,
+                "type": "BUY"
+            }
+        ]
+    }
+}

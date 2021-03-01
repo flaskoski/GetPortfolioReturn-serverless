@@ -16,6 +16,7 @@ module.exports.main = function(event, context, callback){
             start: new Date(event["startDate"] + " 15:00"),
             end: new Date(event["endDate"] + " 15:00")
         }
+        console.info(dates)
         getValues(callback, dates)
    
     }catch(exception){
@@ -63,8 +64,10 @@ function getValues(callback, dates){
 }
 function getTotalReturn(returns, dates){
     let allTotals = {}
+    console.info(dates)
     for(let day = dates.start; day <= dates.end; day.setDate(day.getDate() + 1)){
         let dailyTotals = {cost: 0.0, return: 0.0, profit: 0.0}
+        console.info(`day: ${day}`)
         returns.forEach(r => {
             let assetValues = r.assetValues[utils.dateToString(day)]
             if(assetValues){
