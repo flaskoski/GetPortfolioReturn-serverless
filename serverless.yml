@@ -38,8 +38,9 @@ provider:
   #     - subnet-9b79f7fd
   #     - subnet-58910503
   environment:
-    DAILY_RETURN_TABLE: dailyreturn-${opt:stage, self:provider.stage}
+    DAILY_RETURN_TABLE: smartinvest-dailyreturn-${opt:stage, self:provider.stage}
     ALPHA_API_KEY: ${ssm:/ALPHA_API_KEY~true}
+    MONTHLY_TOTALS_TABLE: smartinvest-monthlyTotals-${opt:stage, self:provider.stage}
 
   iamRoleStatements:
     - Effect: Allow
@@ -50,7 +51,9 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DAILY_RETURN_TABLE}"
+      Resource: ["arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DAILY_RETURN_TABLE}",
+                 "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.MONTHLY_TOTALS_TABLE}" ]
+      
 #    - Effect: "Allow"
 #      Action:
 #        - "s3:ListBucket"
@@ -66,33 +69,41 @@ provider:
 #            - "/*"
 
 # you can add packaging information here
-#package:
+package:
+  # individually: true
 #  include:
 #    - include-me.js
 #    - include-me-dir/**
-#  exclude:
-#    - exclude-me.js
-#    - exclude-me-dir/**
+ exclude:
+   - node_modules/aws-sdk/**
 
 functions:
   main:
-    handler: main.main
+    handler: main/main.main
     events:
       - http:
           path: portfolioReturn
           method: post
           cors: true
-          private: true #require clients with API KEY
+          private: true 
+          #require clients with API KEY
   getAssetReturn:
-    handler: getAssetReturn.main
-    timeout: 3
+    handler: getAssetReturn/getAssetReturn.main
+    timeout: 6
     events:
       - http:
           path: assetReturn
           method: post
           cors: true
           private: true
-
+  getTotalsPerMonth:
+    handler: getTotalsPerMonth/getTotalsPerMonth.main
+    events:
+      - http:
+          path: totalsPerMonth
+          method: post
+          cors: true
+          private: true
 resources:
   Resources:
     DailyReturnsDynamoDbTable:
@@ -100,19 +111,33 @@ resources:
       DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
-          - AttributeName: id
+          - AttributeName: userId
             AttributeType: S
           - AttributeName: assetCode
             AttributeType: S
         KeySchema:
-          - AttributeName: id
+          - AttributeName: userId
             KeyType: HASH
           - AttributeName: assetCode
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 5
+          ReadCapacityUnits: 15
           WriteCapacityUnits: 5
         TableName: ${self:provider.environment.DAILY_RETURN_TABLE}
+    MonthlyTotalsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 15
+          WriteCapacityUnits: 5
+        TableName: ${self:provider.environment.MONTHLY_TOTALS_TABLE}
   
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events

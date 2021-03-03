@@ -21,8 +21,8 @@ exports.main =  function(event, context, callback) {
     //     console.info(`event[${key}]: ${event[key]}`);
     checkDefined(event["body"], "body");
     console.info(event);
-    // body = JSON.parse(event["body"]);
-    body = event["body"];
+    body = JSON.parse(event["body"]);
+    // body = event["body"];
     console.info(`body.code: ${body["code"]}`);
     checkDefined(body["code"], "code");
     checkDefined(body["transactions"], "transactions");

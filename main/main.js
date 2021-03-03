@@ -1,13 +1,14 @@
 'use strict';
 
 const AWS = require('aws-sdk');
-const utils = require('utils');
+const utils = require('../utils');
 
 module.exports.main = function(event, context, callback){
-
     try{
+        console.log(event)
         utils.checkDefined(event["body"], "body");
         event = JSON.parse(event["body"])
+        // event = event["body"]
         utils.checkDefined(event["startDate"], "startDate");
         utils.checkDefined(event["endDate"], "endDate");
         console.log("startDate:", event["startDate"]);
@@ -20,12 +21,12 @@ module.exports.main = function(event, context, callback){
         getValues(callback, dates)
    
     }catch(exception){
-        var response = {
-            statusCode: 400,
-            headers: {'Access-Control-Allow-Origin': '*'},
-            body: JSON.stringify(exception),
-        };
-        callback(null, response);
+        // var response = {
+        //     statusCode: 400,
+        //     headers: {'Access-Control-Allow-Origin': '*'},
+        //     body: JSON.stringify(exception),
+        // };
+        callback(exception)
     }
 };
 
@@ -36,7 +37,7 @@ function getValues(callback, dates){
         TableName: process.env.DAILY_RETURN_TABLE,
         KeyConditionExpression: '#id = :id',
         ExpressionAttributeNames: {
-            '#id': 'id'
+            '#id': 'userId' //TODO
         },
         ExpressionAttributeValues: {
           ':id': 'flaskoski'
@@ -66,16 +67,19 @@ function getTotalReturn(returns, dates){
     let allTotals = {}
     console.info(dates)
     for(let day = dates.start; day <= dates.end; day.setDate(day.getDate() + 1)){
+        if(day.getDay() == 0 || day.getDay()==6) continue;
         let dailyTotals = {cost: 0.0, return: 0.0, profit: 0.0}
         console.info(`day: ${day}`)
+        let foundOne = false
         returns.forEach(r => {
             let assetValues = r.assetValues[utils.dateToString(day)]
             if(assetValues){
                 dailyTotals.cost += assetValues.cost;
                 dailyTotals.profit += assetValues.profit;
                 dailyTotals.return += assetValues.return * assetValues.cost;
+                foundOne = true
             }
-            else console.info("Values of", r.assetCode, "not available on day", utils.dateToString(day))
+            else if(foundOne) console.info("Values of", r.assetCode, "not available on day", utils.dateToString(day))
         })
         if(dailyTotals.cost > 0){
             dailyTotals.return /= dailyTotals.cost;
@@ -85,3 +89,4 @@ function getTotalReturn(returns, dates){
     }
     return allTotals;
 }
+
