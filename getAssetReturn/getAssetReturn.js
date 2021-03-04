@@ -1,6 +1,7 @@
 const https = require('https')
 var dateFormat = require("dateformat");
 // const lambdaLib = require('@aws-sdk/client-dynamodb');
+const utils = require('../utils');
 const AWS = require('aws-sdk');
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
@@ -13,32 +14,35 @@ function checkDefined(reference, referenceName) {
     return reference;
 }
 
-var code ='';
+var asset = {}
 // function main(event, context, callback) {
 exports.main =  function(event, context, callback) {
     const API_KEY = process.env.ALPHA_API_KEY
+
+//---- Check Inputs
     // for(let key in event)
     //     console.info(`event[${key}]: ${event[key]}`);
     checkDefined(event["body"], "body");
-    console.info(event);
+    // console.info(event);
     body = JSON.parse(event["body"]);
     // body = event["body"];
-    console.info(`body.code: ${body["code"]}`);
-    checkDefined(body["code"], "code");
+    checkDefined(body["asset"], "asset");
+    console.info(`body.asset:`); console.info(body["asset"]);
+    asset = body["asset"];
+    checkDefined(asset.code, "asset.Code");  checkDefined(asset.type, "asset.type");
     checkDefined(body["transactions"], "transactions");
     checkDefined(body["startDate"], "startDate");
     checkDefined(body["endDate"], "endDate");
     console.log("startDate:", body["startDate"]);
     console.log("endDate:", body["endDate"]);
     console.log("Number Transactions:", body["transactions"].length)
-    code = body["code"];
     const transactions = body["transactions"];
     const startDate = new Date(body["startDate"] + " 15:00");
     const endDate = new Date(body["endDate"] + " 15:00");
     
-    //--get outputsize for the API request to get the daily quotes
+//--get outputsize for the API request to get the daily quotes
     var outputSize = getOutputSize(startDate, endDate);
-    let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&outputsize="+ outputSize +"&symbol="+ code +".SA&apikey="+ API_KEY
+    let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&outputsize="+ outputSize +"&symbol="+ asset.code +".SA&apikey="+ API_KEY
     
     console.log("GET request:", url);
     https.get(url, (res) => {
@@ -50,7 +54,7 @@ exports.main =  function(event, context, callback) {
             let quotes = JSON.parse(body)['Time Series (Daily)'];
             if(quotes){
                 //--calculate returns and save on DB
-                let item = saveValues(code, callback, 
+                let item = saveValues(asset, callback, 
                     calculateDailyReturns(transactions, startDate, endDate, quotes) )
                 const response = {
                     statusCode: 200,
@@ -62,7 +66,7 @@ exports.main =  function(event, context, callback) {
                 };
                 callback(null, response)
             }
-            else callback(Error("Could not get quotes from", code))
+            else callback(Error("Could not get quotes from", asset.code))
         });  
     }).on('error', (e) => {
         callback(Error(e))
@@ -135,40 +139,42 @@ function sumTransactionsFromDay(totals, transactions, currentQuote, date, before
 
 //--return only transactions from the day (or until the day if beforDate is true)
 function getTransactionsFromDay(transactions, date, beforeDate){
-    return transactions.filter(t => t.asset == code && 
+    return transactions.filter(t => t.asset == asset.code && 
         (beforeDate? toDate(t.date).getTime() < date.getTime() : toDate(t.date).getTime() == date.getTime()) )
         .sort((a, b) => toDate(a.date).getTime() - toDate(b.date).getTime() )
 }
 
-function saveValues(code, callback, values){
+function saveValues(asset, callback, values){
     //CREATE params
     //const timestamp = new Date().getTime();
     // const params = {
     //     TableName: process.env.DAILY_RETURN_TABLE,
     //     Item: {
     //         id: uuid(),
-    //         assetCode: code,
+    //         assetCode: asset.code,
     //         assetValues: values,
     //         createdAt: timestamp,
     //         updatedAt: timestamp,
     //     },
     // };
-
+    let today = new Date()
     const params = {
         TableName: process.env.DAILY_RETURN_TABLE,
         Key: {
             'userId': 'flaskoski',            
-            'assetCode': code
+            'assetCode': asset.code
         },
         ExpressionAttributeNames: {
             '#value': 'assetValues',
+            '#type': 'assetType'
         },
         ExpressionAttributeValues: {
             ':val': values,
-            ':updatedAt':  new Date()
+            ':t': asset.type,
+            ':updatedAt':  utils.getFullDate(today)
         },
-        UpdateExpression: 'SET #value = :val, updatedAt = :updatedAt',
-        ReturnValues: 'ALL_NEW',
+        UpdateExpression: 'SET #value = :val, #type = :t, updatedAt = :updatedAt',
+        ReturnValues: 'UPDATED_NEW',
       };
 
     // create function
@@ -183,7 +189,7 @@ function saveValues(code, callback, values){
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Credentials': true,
                 },
-                body: 'Couldn\'t save the totals for asset '+ code,
+                body: 'Couldn\'t save the totals for asset '+ asset.code,
             });
             return;
         }

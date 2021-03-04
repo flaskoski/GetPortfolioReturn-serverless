@@ -104,6 +104,14 @@ functions:
           method: post
           cors: true
           private: true
+  getCurrentQuote:
+    handler: currentQuote/getCurrentQuote.main
+    events:
+      - http:
+          path: currentQuote
+          method: get
+          cors: true
+          private: true
 resources:
   Resources:
     DailyReturnsDynamoDbTable:
