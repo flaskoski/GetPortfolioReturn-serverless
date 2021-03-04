@@ -96,6 +96,9 @@ functions:
           method: post
           cors: true
           private: true
+    environment:
+      PERCENTAGE_FEE: 0.0003
+      PERCENTAGE_TAX: 0.00005
   getTotalsPerMonth:
     handler: getTotalsPerMonth/getTotalsPerMonth.main
     events:

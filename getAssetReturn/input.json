@@ -1,6 +1,9 @@
 { 
     "body" : {
-        "code": "BBAS3",
+        "asset":{
+            "code": "BBAS3",
+            "type": "Stocks"
+        },
         "startDate": "2020-02-19",
         "endDate": "2021-02-26",
         "transactions": [

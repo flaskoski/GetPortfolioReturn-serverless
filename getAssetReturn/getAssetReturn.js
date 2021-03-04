@@ -5,6 +5,8 @@ const utils = require('../utils');
 const AWS = require('aws-sdk');
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
+const PERCENTAGE_FEE= parseFloat(process.env.PERCENTAGE_FEE)
+const PERCENTAGE_TAX= parseFloat(process.env.PERCENTAGE_TAX)
 
 //-- Helper function used to validate input
 function checkDefined(reference, referenceName) {
@@ -18,7 +20,7 @@ var asset = {}
 // function main(event, context, callback) {
 exports.main =  function(event, context, callback) {
     const API_KEY = process.env.ALPHA_API_KEY
-
+    console.log("Tax rate:", PERCENTAGE_TAX, "- Fees rate:", PERCENTAGE_FEE)
 //---- Check Inputs
     // for(let key in event)
     //     console.info(`event[${key}]: ${event[key]}`);
@@ -85,7 +87,7 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
     let todayValue = quotes[dateToString(startDate)]["5. adjusted close"];
 
     //--get totals from all transactions made before and on start date
-    let totals = {shares: 0, cost: 0.0, return: 1.0, profit: 0.0, dividends: 0.0, jcp: 0.0}
+    let totals = {shares: 0, cost: 0.0, return: 1.0, profit: 0.0, dividends: 0.0, jcp: 0.0, fees: 0.0}
     sumTransactionsFromDay(totals, transactions, todayValue, startDate, true)
     
     var assetDailyValues = {};
@@ -107,6 +109,7 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
     console.log("Total Profit:", totals.profit);
     console.log("Total Dividends:", totals.dividends);
     console.log("Total JCP:", totals.jcp);
+    console.log("Total Fees/Taxes:", totals.fees);
     return assetDailyValues;
 }
 
@@ -118,11 +121,13 @@ function sumTransactionsFromDay(totals, transactions, currentQuote, date, before
         if(t.type.toUpperCase() == "BUY"){
             totals.shares += t.shares_number;
             totals.cost += t.price * t.shares_number;
+            totals.fees += t.price * t.shares_number * PERCENTAGE_FEE;
         }else if(t.type.toUpperCase() == "SELL"){
             let soldSharesCost = t.shares_number * (totals.cost)/(totals.shares);
             totals.profit += t.price * t.shares_number - soldSharesCost;
             totals.cost -= soldSharesCost;
             totals.shares -= t.shares_number;
+            totals.fees += t.price * t.shares_number * (PERCENTAGE_FEE + PERCENTAGE_TAX);
         }else{
             if(t.type.toUpperCase() == "DIVIDEND") totals.dividends += t.price
             else totals.jcp += t.price
@@ -196,7 +201,7 @@ function saveValues(asset, callback, values){
         return result.Attributes;
     })
     // return params.Item;
-    return params.Key;
+    return values[values.length-1];
 }
 
 function isDividends(transaction){
