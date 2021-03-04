@@ -121,13 +121,14 @@ function sumTransactionsFromDay(totals, transactions, currentQuote, date, before
         if(t.type.toUpperCase() == "BUY"){
             totals.shares += t.shares_number;
             totals.cost += t.price * t.shares_number;
-            totals.fees += t.price * t.shares_number * PERCENTAGE_FEE;
         }else if(t.type.toUpperCase() == "SELL"){
             let soldSharesCost = t.shares_number * (totals.cost)/(totals.shares);
             totals.profit += t.price * t.shares_number - soldSharesCost;
             totals.cost -= soldSharesCost;
             totals.shares -= t.shares_number;
-            totals.fees += t.price * t.shares_number * (PERCENTAGE_FEE + PERCENTAGE_TAX);
+            //sum fees from BUY+SELL actions
+            totals.fees +=  (soldSharesCost*PERCENTAGE_FEE) //BUY
+                    +  (t.price*t.shares_number) * (PERCENTAGE_FEE + PERCENTAGE_TAX); //SELL
         }else{
             if(t.type.toUpperCase() == "DIVIDEND") totals.dividends += t.price
             else totals.jcp += t.price
@@ -190,7 +191,7 @@ function saveValues(asset, callback, values){
             console.error(error);
             callback(null, {
                 statusCode: error.statusCode || 501,
-                headers: { 'Content-Type': 'text/plain' ,
+                headers: { 'Content-Type': 'application/json' ,
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Credentials': true,
                 },
@@ -201,7 +202,8 @@ function saveValues(asset, callback, values){
         return result.Attributes;
     })
     // return params.Item;
-    return values[values.length-1];
+    return params.Key;
+    // return values[values.length-1];
 }
 
 function isDividends(transaction){
