@@ -108,7 +108,7 @@ functions:
           cors: true
           private: true
   getCurrentQuote:
-    handler: currentQuote/getCurrentQuote.main
+    handler: currentQuote/getCurrentQuote.handler
     events:
       - http:
           path: currentQuote
