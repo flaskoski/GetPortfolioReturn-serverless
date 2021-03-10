@@ -38,7 +38,7 @@ module.exports= {
         };
           
         return documentClient.query(params, callback);
-    }
+    },
 
     // formatDate: function(date){
     //     if(!date || date.length != 3)
@@ -49,4 +49,11 @@ module.exports= {
     //     const yy = date[0]
     //     return `${dd}-${mm}-${yy}`;
     // }
+    
+    writeFile: function(data, filename = "output"){
+        const fs = require('fs');
+        fs.writeFile(filename + '.txt', data, function (err) {
+            if (err) return console.log(err);
+        })
+    }
 }

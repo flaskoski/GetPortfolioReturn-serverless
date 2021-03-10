@@ -88,7 +88,7 @@ functions:
           private: true 
           #require clients with API KEY
   getAssetReturn:
-    handler: getAssetReturn/getAssetReturn.main
+    handler: getAssetReturn/getAssetReturn.handler
     timeout: 6
     events:
       - http:

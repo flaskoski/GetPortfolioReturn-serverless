@@ -5,8 +5,8 @@ const utils = require('../utils');
 const AWS = require('aws-sdk');
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-const PERCENTAGE_FEE= parseFloat(process.env.PERCENTAGE_FEE)
-const PERCENTAGE_TAX= parseFloat(process.env.PERCENTAGE_TAX)
+var PERCENTAGE_FEE= parseFloat(process.env.PERCENTAGE_FEE)
+var PERCENTAGE_TAX= parseFloat(process.env.PERCENTAGE_TAX)
 
 //-- Helper function used to validate input
 function checkDefined(reference, referenceName) {
@@ -16,20 +16,13 @@ function checkDefined(reference, referenceName) {
     return reference;
 }
 
-var asset = {}
-// function main(event, context, callback) {
-exports.main =  function(event, context, callback) {
-    const API_KEY = process.env.ALPHA_API_KEY
-    console.log("Tax rate:", PERCENTAGE_TAX, "- Fees rate:", PERCENTAGE_FEE)
-//---- Check Inputs
-    // for(let key in event)
-    //     console.info(`event[${key}]: ${event[key]}`);
+function checkInputs(event){
     checkDefined(event["body"], "body");
     // console.info(event);
-    body = JSON.parse(event["body"]);
+    let body = JSON.parse(event["body"]);
     // body = event["body"];
     checkDefined(body["asset"], "asset");
-    console.info(`body.asset:`); console.info(body["asset"]);
+    console.log(`body.asset:`); console.log(body["asset"]);
     asset = body["asset"];
     checkDefined(asset.code, "asset.Code");  checkDefined(asset.type, "asset.type");
     checkDefined(body["transactions"], "transactions");
@@ -38,45 +31,79 @@ exports.main =  function(event, context, callback) {
     console.log("startDate:", body["startDate"]);
     console.log("endDate:", body["endDate"]);
     console.log("Number Transactions:", body["transactions"].length)
+    return body;
+}
+
+var asset = {}
+// function main(event, context, callback) {
+exports.handler = function(event, context, callback) {
+    exports.main(event).then( item => {
+        const response = {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Credentials': true,
+            },
+            body: JSON.stringify(item)
+        };
+        callback(null, response)
+    }).catch(e => callback(e))
+}
+
+exports.requestTimeSeries = function(outputSize, code){
+    const API_KEY = process.env.ALPHA_API_KEY
+    let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&outputsize="+ outputSize +"&symbol="+ code +".SA&apikey="+ API_KEY
+    
+    return new Promise(resolve => {
+        console.log("GET request:", url);
+        https.get(url, (res) => {
+            var body = '';
+            res.on('data', function(chunk){
+                body += chunk;
+            });
+            res.on('end', function(){
+                console.log("oi")
+                let quotes = JSON.parse(body)['Time Series (Daily)'];
+                resolve(quotes)
+            });  
+        }).on('error', (e) => {
+            throw Error(e)
+        })
+    })
+}
+
+exports.main =  function(event) {
+    let body = checkInputs(event)
+
+    
+    PERCENTAGE_FEE= parseFloat(process.env.PERCENTAGE_FEE)
+    PERCENTAGE_TAX= parseFloat(process.env.PERCENTAGE_TAX)
+    console.log("Tax rate:", PERCENTAGE_TAX, "- Fees rate:", PERCENTAGE_FEE)
+ 
+    const asset = body["asset"];
     const transactions = body["transactions"];
     const startDate = new Date(body["startDate"] + " 15:00");
     const endDate = new Date(body["endDate"] + " 15:00");
     
 //--get outputsize for the API request to get the daily quotes
     var outputSize = getOutputSize(startDate, endDate);
-    let url = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&outputsize="+ outputSize +"&symbol="+ asset.code +".SA&apikey="+ API_KEY
-    
-    console.log("GET request:", url);
-    https.get(url, (res) => {
-        var body = '';
-        res.on('data', function(chunk){
-            body += chunk;
-        });
-        res.on('end', function(){
-            let quotes = JSON.parse(body)['Time Series (Daily)'];
-            if(quotes){
-                //--calculate returns and save on DB
-                let item = saveValues(asset, callback, 
-                    calculateDailyReturns(transactions, startDate, endDate, quotes) )
-                const response = {
-                    statusCode: 200,
-                    headers: {
-                        'Access-Control-Allow-Origin': '*',
-                        'Access-Control-Allow-Credentials': true,
-                      },
-                    body: JSON.stringify(item)
-                };
-                callback(null, response)
-            }
-            else callback(Error("Could not get quotes from", asset.code))
-        });  
-    }).on('error', (e) => {
-        callback(Error(e))
+
+    return exports.requestTimeSeries(outputSize, asset.code).then(quotes =>{
+        if(quotes){
+            console.log(quotes["2021-03-08"])
+            //--calculate returns and save on DB
+            let item = exports.saveValues(asset, 
+                exports.calculateDailyReturns(transactions, startDate, endDate, quotes) )
+            return item
+        }
+        else throw Error("Could not get quotes from", asset.code)
     })
+
+    
 }
 
 //-- Calculate daily returns, cost, profit, number of shares, dividends and JCP (interest on equity capital)
-function calculateDailyReturns(transactions, startDate, endDate, quotes){
+exports.calculateDailyReturns = function(transactions, startDate, endDate, quotes){
     //--skip weekend/holidays
     for(let day = startDate; day <= endDate; day.setDate(day.getDate() + 1))
         if(!quotes[dateToString(day)])
@@ -110,6 +137,7 @@ function calculateDailyReturns(transactions, startDate, endDate, quotes){
     console.log("Total Dividends:", totals.dividends);
     console.log("Total JCP:", totals.jcp);
     console.log("Total Fees/Taxes:", totals.fees);
+
     return assetDailyValues;
 }
 
@@ -127,6 +155,7 @@ function sumTransactionsFromDay(totals, transactions, currentQuote, date, before
             totals.cost -= soldSharesCost;
             totals.shares -= t.shares_number;
             //sum fees from BUY+SELL actions
+            
             totals.fees +=  (soldSharesCost*PERCENTAGE_FEE) //BUY
                     +  (t.price*t.shares_number) * (PERCENTAGE_FEE + PERCENTAGE_TAX); //SELL
         }else{
@@ -150,7 +179,7 @@ function getTransactionsFromDay(transactions, date, beforeDate){
         .sort((a, b) => toDate(a.date).getTime() - toDate(b.date).getTime() )
 }
 
-function saveValues(asset, callback, values){
+exports.saveValues = function(asset, values){
     //CREATE params
     //const timestamp = new Date().getTime();
     // const params = {
@@ -189,15 +218,7 @@ function saveValues(asset, callback, values){
         // handle potential errors
         if (error) {
             console.error(error);
-            callback(null, {
-                statusCode: error.statusCode || 501,
-                headers: { 'Content-Type': 'application/json' ,
-                    'Access-Control-Allow-Origin': '*',
-                    'Access-Control-Allow-Credentials': true,
-                },
-                body: 'Couldn\'t save the totals for asset '+ asset.code,
-            });
-            return;
+            throw Error('Couldn\'t save the totals for asset '+ asset.code)
         }
         return result.Attributes;
     })
