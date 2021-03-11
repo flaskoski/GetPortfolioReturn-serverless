@@ -1,4 +1,4 @@
-const getQuote = require('./getCurrentQuote');
+const getQuote = require('../getCurrentQuote');
 const input = require('./input.json')
 
 it('Correct asset code returns its last quote values', () => {

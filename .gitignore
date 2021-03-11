@@ -7,3 +7,6 @@ package-lock.json
 
 # Serverless directories
 .serverless
+
+#test files
+main/test/*

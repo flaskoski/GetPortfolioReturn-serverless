@@ -75,11 +75,19 @@ package:
 #    - include-me.js
 #    - include-me-dir/**
  exclude:
+   - package-lock.json
+   - README.md
+   - LICENSE
+   - .babelrc
+   - babel.config.js
    - node_modules/aws-sdk/**
+   - main/test/**
+   - getAssetReturn/test/**
+   - currentQuote/test/**
 
 functions:
   main:
-    handler: main/main.main
+    handler: main/main.handler
     events:
       - http:
           path: portfolioReturn

@@ -1,4 +1,4 @@
-const getAssetReturn = require('./getAssetReturn');
+const getAssetReturn = require('../getAssetReturn');
 const https = require('https');
 
 
@@ -18,6 +18,8 @@ describe('test', () => {
     
     //--disable logs
     console.log = function(){}
+
+    //--tests
     it('should return the asset return values series', () => {
         return getAssetReturn.main(input).then(mockedConfirmation => {
             expect(getAssetReturn.saveValues.mock.calls[0][1]["2020-11-04"]).toEqual(expectedOutput["2020-11-04"])

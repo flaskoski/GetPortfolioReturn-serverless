@@ -51,6 +51,7 @@ module.exports= {
     // }
     
     writeFile: function(data, filename = "output"){
+        data = (typeof data == "string"? data : JSON.stringify(data))
         const fs = require('fs');
         fs.writeFile(filename + '.txt', data, function (err) {
             if (err) return console.log(err);

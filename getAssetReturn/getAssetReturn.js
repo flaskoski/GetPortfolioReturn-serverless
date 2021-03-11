@@ -75,7 +75,6 @@ exports.requestTimeSeries = function(outputSize, code){
 exports.main =  function(event) {
     let body = checkInputs(event)
 
-    
     PERCENTAGE_FEE= parseFloat(process.env.PERCENTAGE_FEE)
     PERCENTAGE_TAX= parseFloat(process.env.PERCENTAGE_TAX)
     console.log("Tax rate:", PERCENTAGE_TAX, "- Fees rate:", PERCENTAGE_FEE)
