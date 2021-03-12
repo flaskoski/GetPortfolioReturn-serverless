@@ -22,7 +22,8 @@ function checkInputs(event){
     let body = JSON.parse(event["body"]);
     // body = event["body"];
     checkDefined(body["asset"], "asset");
-    console.log(`body.asset:`); console.log(body["asset"]);
+    checkDefined(body["username"], "username");
+    // console.log(`body.username:`); console.log(body["username"]);
     asset = body["asset"];
     checkDefined(asset.code, "asset.Code");  checkDefined(asset.type, "asset.type");
     checkDefined(body["transactions"], "transactions");
@@ -79,6 +80,7 @@ exports.main =  function(event) {
     PERCENTAGE_TAX= parseFloat(process.env.PERCENTAGE_TAX)
     console.log("Tax rate:", PERCENTAGE_TAX, "- Fees rate:", PERCENTAGE_FEE)
  
+    const username = body["username"];
     const asset = body["asset"];
     const transactions = body["transactions"];
     const startDate = new Date(body["startDate"] + " 15:00");
@@ -91,7 +93,7 @@ exports.main =  function(event) {
         if(quotes){
             console.log(quotes["2021-03-08"])
             //--calculate returns and save on DB
-            let item = exports.saveValues(asset, 
+            let item = exports.saveValues(username, asset, 
                 exports.calculateDailyReturns(transactions, startDate, endDate, quotes) )
             return item
         }
@@ -178,7 +180,7 @@ function getTransactionsFromDay(transactions, date, beforeDate){
         .sort((a, b) => toDate(a.date).getTime() - toDate(b.date).getTime() )
 }
 
-exports.saveValues = function(asset, values){
+exports.saveValues = function(username, asset, values){
     //CREATE params
     //const timestamp = new Date().getTime();
     // const params = {
@@ -195,7 +197,7 @@ exports.saveValues = function(asset, values){
     const params = {
         TableName: process.env.DAILY_RETURN_TABLE,
         Key: {
-            'userId': 'flaskoski',            
+            'userId': username,            
             'assetCode': asset.code
         },
         ExpressionAttributeNames: {
