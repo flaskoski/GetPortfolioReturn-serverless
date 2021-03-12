@@ -10,3 +10,6 @@ package-lock.json
 
 #test files
 main/test/*
+
+#misc
+env.yml
