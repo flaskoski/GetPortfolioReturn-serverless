@@ -1,0 +1,75 @@
+{   
+    "2021-01-08": {
+        "shares": 0,
+        "cost": 0,
+        "return": 1,     
+        "profit": 0,
+        "dividends": 0,
+        "jcp": 0,
+        "fees": 0
+        },
+    "2021-01-11": {
+        "shares": 300,
+        "cost": 15000,
+        "return": 0.770972,     
+        "profit": 0,
+        "dividends": 0,
+        "jcp": 0,
+        "fees": 0
+        }, 
+        "2021-01-12": {
+        "shares": 400,
+        "cost": 16000,
+        "return": 0.9725775000000001,    
+        "profit": 0,
+        "dividends": 0,
+        "jcp": 0,
+        "fees": 0
+        },
+        "2021-01-13": {
+        "shares": 100,
+        "cost": 4000,
+        "return": 0.924565,    
+        "profit": -6000,
+        "dividends": 0,
+        "jcp": 200,
+        "fees": 5.7
+        },
+        "2021-01-14": {
+        "shares": 200,
+        "cost": 6000,
+        "return": 1.2298,    
+        "profit": -6000,
+        "dividends": 200,
+        "jcp": 200,
+        "fees": 5.7
+        },
+        "2021-01-15": {
+        "shares": 200,
+        "cost": 6000,
+        "return": 1.1917166666666668,     
+        "profit": -6000,
+        "dividends": 200,
+        "jcp": 350,
+        "fees": 5.7
+        },
+        "2021-01-18": {
+        "shares": 100,
+        "cost": 3000,
+        "return": 1.1795699999999998,    
+        "profit": 1000,
+        "dividends": 350,
+        "jcp": 350,
+        "fees": 10.1
+        },
+        
+        "2021-01-19": {
+        "shares": 100,
+        "cost": 3000,
+        "return": 1.1595433333333331,     
+        "profit": 1000,
+        "dividends": 350,
+        "jcp": 350,
+        "fees": 10.1
+        }
+}

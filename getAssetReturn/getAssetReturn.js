@@ -22,9 +22,9 @@ function checkInputs(event){
     let body = JSON.parse(event["body"]);
     // body = event["body"];
     checkDefined(body["asset"], "asset");
-    checkDefined(body["username"], "username");
-    // console.log(`body.username:`); console.log(body["username"]);
     asset = body["asset"];
+    checkDefined(body["username"], "username");
+    console.log(`asset:`); console.log(asset);
     checkDefined(asset.code, "asset.Code");  checkDefined(asset.type, "asset.type");
     checkDefined(body["transactions"], "transactions");
     checkDefined(body["startDate"], "startDate");
@@ -81,7 +81,6 @@ exports.main =  function(event) {
     console.log("Tax rate:", PERCENTAGE_TAX, "- Fees rate:", PERCENTAGE_FEE)
  
     const username = body["username"];
-    const asset = body["asset"];
     const transactions = body["transactions"];
     const startDate = new Date(body["startDate"] + " 15:00");
     const endDate = new Date(body["endDate"] + " 15:00");
@@ -89,6 +88,7 @@ exports.main =  function(event) {
 //--get outputsize for the API request to get the daily quotes
     var outputSize = getOutputSize(startDate, endDate);
 
+    console.log(body["asset"]); console.log(asset);
     return exports.requestTimeSeries(outputSize, asset.code).then(quotes =>{
         if(quotes){
             console.log(quotes["2021-03-08"])
@@ -159,9 +159,10 @@ function sumTransactionsFromDay(totals, transactions, currentQuote, date, before
             
             totals.fees +=  (soldSharesCost*PERCENTAGE_FEE) //BUY
                     +  (t.price*t.shares_number) * (PERCENTAGE_FEE + PERCENTAGE_TAX); //SELL
+            totals.fees = Math.round(totals.fees*10000)/10000 
         }else{
             if(t.type.toUpperCase() == "DIVIDEND") totals.dividends += t.price
-            else totals.jcp += t.price
+            else if(t.type.toUpperCase() == "JCP") totals.jcp += t.price
         }
         // if(totals.shares > 0) console.log("Avg. Cost:",totals.cost/totals.shares)
         // console.log("Number of Shares:",totals.shares)
