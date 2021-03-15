@@ -1,0 +1,5 @@
+{ 
+    "queryStringParameters" : {
+        "year": "2020"
+    }
+}

@@ -23,22 +23,53 @@ module.exports= {
         return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
     },
 
-    getStoredAssetsReturns: function(AWS, callback){
+    getStoredAssetsReturns: function(AWS, assetCode){
         var documentClient = new AWS.DynamoDB.DocumentClient();
-    
-        var params = {
-            TableName: process.env.DAILY_RETURN_TABLE,
-            KeyConditionExpression: '#id = :id',
-            ExpressionAttributeNames: {
-                '#id': 'userId'
-            },
-            ExpressionAttributeValues: {
-              ':id': 'flaskoski'
+        var params = {}
+        if(assetCode)
+            params = {
+                TableName: process.env.DAILY_RETURN_TABLE,
+                KeyConditionExpression: '#id = :id AND #code = :code',
+                ExpressionAttributeNames: {
+                    '#id': 'userId',
+                    '#code': 'assetCode'
+                },
+                ExpressionAttributeValues: {
+                    ':id': 'flaskoski',
+                    ':code': assetCode
+                }
+            };
+        else
+            params = {
+                TableName: process.env.DAILY_RETURN_TABLE,
+                KeyConditionExpression: '#id = :id',
+                ExpressionAttributeNames: {
+                    '#id': 'userId'
+                },
+                ExpressionAttributeValues: {
+                ':id': 'flaskoski'
+                }
+            };
+        let returns = []
+        return new Promise( (resolve, reject) =>{
+            documentClient.query(params, getNextAssetsReturnsPage)
+
+            function getNextAssetsReturnsPage(err, data){
+                if (err) reject(err);
+                returns = [...returns, ...data.Items]
+                if(data.Items) 
+                    console.log("returns loaded:" + data.Items.length)
+                    
+                if(!data.LastEvaluatedKey)
+                    resolve(returns)
+                else {
+                    params.ExclusiveStartKey = data.LastEvaluatedKey
+                    documentClient.query(params, getNextAssetsReturnsPage)
+                }
             }
-        };
-          
-        return documentClient.query(params, callback);
+        })
     },
+
 
     // formatDate: function(date){
     //     if(!date || date.length != 3)

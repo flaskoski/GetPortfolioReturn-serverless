@@ -7,7 +7,7 @@ service: getportfolioreturn
 # Check out our docs for more details
 frameworkVersion: '2'
 
-securedVariables: ${file(./env.yml)}
+# securedVariables: ${file(./env.yml)}
 
 provider:
   name: aws
@@ -44,6 +44,8 @@ provider:
     DAILY_RETURN_TABLE: smartinvest-dailyreturn-${opt:stage, self:provider.stage}
     ALPHA_API_KEY: ${ssm:/ALPHA_API_KEY~true}
     MONTHLY_TOTALS_TABLE: smartinvest-monthlyTotals-${opt:stage, self:provider.stage}
+    PERCENTAGE_FEE: 0.0003
+    PERCENTAGE_TAX: 0.00005
 
   iamRoleStatements:
     - Effect: Allow
@@ -118,15 +120,25 @@ functions:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: SmartInvestUsersApiGatewayAuthorizer
-    environment:
-      PERCENTAGE_FEE: 0.0003
-      PERCENTAGE_TAX: 0.00005
   getTotalsPerMonth:
-    handler: getTotalsPerMonth/getTotalsPerMonth.main
+    handler: getTotalsPerMonth/getTotalsPerMonth.handler
+    timeout: 3
     events:
       - http:
           path: totalsPerMonth
           method: post
+          cors: true
+          private: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: SmartInvestUsersApiGatewayAuthorizer
+  getPortfolioPosition:
+    handler: portfolioPosition/getPortfolioPosition.handler
+    events:
+      - http:
+          path: portfolioPosition
+          method: get
           cors: true
           private: true
           authorizer:
@@ -190,7 +202,7 @@ resources:
           Ref : "ApiGatewayRestApi" #default API gateway name
         Type: COGNITO_USER_POOLS
         ProviderARNs:
-          - arn:aws:cognito-idp:${self:provider.region}:${self:securedVariables.awsAccountId}:userpool/${self:securedVariables.cognitoPoolId}
+          - arn:aws:cognito-idp:${self:provider.region}:${ssm:/tf-aws_account_id~true}:userpool/${ssm:/tf-smartinvest_cognito_pool_id~true}
 
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events

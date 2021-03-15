@@ -10,6 +10,7 @@ package-lock.json
 
 #test files
 main/test/*
+getTotalsPerMonth/test/input.json
 
 #misc
 env.yml
