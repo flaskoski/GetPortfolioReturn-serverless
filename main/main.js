@@ -27,6 +27,18 @@ module.exports.handler = function(event, context, callback){
 
 }
 
+exports.main = function(event){
+    let body = checkInputs(event)
+    const dates =  {
+        start: new Date(body["startDate"] + " 15:00"),
+        end: new Date(body["endDate"] + " 15:00")
+    }
+    const username = body["username"]
+    console.log(dates)
+    return exports.getValues(username, dates)
+            .then(assetsReturns => getTotalReturn(assetsReturns, dates) )
+};
+
 function checkInputs(event){
     // console.log(event)
     utils.checkDefined(event["body"], "body");
@@ -34,24 +46,14 @@ function checkInputs(event){
     // event = event["body"]
     utils.checkDefined(body["startDate"], "startDate");
     utils.checkDefined(body["endDate"], "endDate");
+    utils.checkDefined(body["username"], "username");
     console.log("startDate:", body["startDate"]);
     console.log("endDate:", body["endDate"]);
     return body;
 }
 
 
-exports.main = function(event){
-    let body = checkInputs(event)
-    const dates =  {
-        start: new Date(body["startDate"] + " 15:00"),
-        end: new Date(body["endDate"] + " 15:00")
-    }
-    console.log(dates)
-    return exports.getValues(dates)
-            .then(assetsReturns => getTotalReturn(assetsReturns, dates) )
-};
-
-exports.getValues = function(dates){
+exports.getValues = function(username, dates){
     var documentClient = new AWS.DynamoDB.DocumentClient();
 
     var params = {
@@ -61,7 +63,7 @@ exports.getValues = function(dates){
             '#id': 'userId'
         },
         ExpressionAttributeValues: {
-          ':id': 'flaskoski'
+          ':id': username
         }
     };
     return new Promise( (resolve, reject) => 

@@ -25,12 +25,14 @@ exports.main =  function(event) {
     // console.info(event["body"]);
     let body = JSON.parse(event["body"]);
     // let body = event["body"];
+    utils.checkDefined(body["username"], "username");
     utils.checkDefined(body["transactions"], "transactions");
     utils.checkDefined(body["startDate"], "startDate");
     utils.checkDefined(body["endDate"], "endDate");
     // console.log("startDate:", body["startDate"]);
     // console.log("endDate:", body["endDate"]);
     console.log("Number of Transactions:", body["transactions"].length)
+    const username = body["username"]
     const transactions = body["transactions"];
     const dates={
         start: new Date(body["startDate"] + " 15:00"),
@@ -38,7 +40,7 @@ exports.main =  function(event) {
     console.log("dates:"); console.log(dates);
 
     //Load asset returns and call calculate function
-    return utils.getStoredAssetsReturns(AWS).then(returns => {
+    return utils.getStoredAssetsReturns(AWS, username).then(returns => {
         return calculateTotalsPerMonth(returns, transactions, dates)
     })  
 

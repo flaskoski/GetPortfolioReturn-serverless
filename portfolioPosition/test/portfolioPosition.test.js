@@ -1,19 +1,19 @@
-const getQuote = require('../getCurrentQuote');
-const input = require('./input.json')
+// const getQuote = require('../getCurrentQuote');
+// const input = require('./input.json')
 
-it('Correct asset code returns its last quote values', () => {
-    expect.assertions(8)
-    return getQuote.main(input).then(data => {
-        expect(data).toBeDefined()
-        expect(data.code).toBe(input["queryStringParameters"].code)
-        expect(data.high).toBeGreaterThan(0.1)
-        expect(data.high).toBeLessThan(1000); 
-        expect(data.low).toBeLessThanOrEqual(data.high)
-        expect(data.currentPrice).toBeLessThanOrEqual(data.high) 
-        expect(data.currentPrice).toBeGreaterThanOrEqual(data.low)
-        expect(data.change).toBeDefined()
-    }) 
-});
+// it('Correct asset code returns its last quote values', () => {
+//     expect.assertions(8)
+//     return getQuote.main(input).then(data => {
+//         expect(data).toBeDefined()
+//         expect(data.code).toBe(input["queryStringParameters"].code)
+//         expect(data.high).toBeGreaterThan(0.1)
+//         expect(data.high).toBeLessThan(1000); 
+//         expect(data.low).toBeLessThanOrEqual(data.high)
+//         expect(data.currentPrice).toBeLessThanOrEqual(data.high) 
+//         expect(data.currentPrice).toBeGreaterThanOrEqual(data.low)
+//         expect(data.change).toBeDefined()
+//     }) 
+// });
 
 // test('Invalid asset code returns an error', async () => {
 //     input.queryStringParameters.code = 'PETRR4'

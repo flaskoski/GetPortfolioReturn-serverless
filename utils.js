@@ -23,7 +23,7 @@ module.exports= {
         return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
     },
 
-    getStoredAssetsReturns: function(AWS, assetCode){
+    getStoredAssetsReturns: function(AWS, username, assetCode){
         var documentClient = new AWS.DynamoDB.DocumentClient();
         var params = {}
         if(assetCode)
@@ -35,7 +35,7 @@ module.exports= {
                     '#code': 'assetCode'
                 },
                 ExpressionAttributeValues: {
-                    ':id': 'flaskoski',
+                    ':id': username,
                     ':code': assetCode
                 }
             };
@@ -47,7 +47,7 @@ module.exports= {
                     '#id': 'userId'
                 },
                 ExpressionAttributeValues: {
-                ':id': 'flaskoski'
+                ':id': username
                 }
             };
         let returns = []

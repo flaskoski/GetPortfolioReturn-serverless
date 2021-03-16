@@ -6,12 +6,14 @@ exports.main = function(event){
     PERCENTAGE_FEE = process.env.PERCENTAGE_FEE
 
     utils.checkDefined(event["queryStringParameters"]["year"], "queryparameter.code");
+    utils.checkDefined(event["queryStringParameters"]["username"], "queryparameter.username");
     let year = event["queryStringParameters"]["year"]
+    const username = event["queryStringParameters"]["username"]
     console.log("\'Portfolio Position\' request received for year: " + year)
     if(!parseInt(year) || parseInt(year) > new Date().getFullYear() || parseInt(year) < 2000 )
         throw new Error("Invalid year!")
     //Load assets returns and call getPortfolioPosition
-    return utils.getStoredAssetsReturns(AWS).then(returns => {
+    return utils.getStoredAssetsReturns(AWS, username).then(returns => {
         return getPortfolioPosition(year, returns)
     })  
 }
@@ -37,8 +39,8 @@ function getPortfolioPosition(year, returns){
             console.log(PERCENTAGE_FEE)
             portfolio[r.assetCode] = {
                 shares: r.assetValues[lastDayOfYear].shares,
-                cost: r.assetValues[lastDayOfYear].cost,
-                averagePrice: (r.assetValues[lastDayOfYear].cost - r.assetValues[lastDayOfYear].cost*PERCENTAGE_FEE ) / r.assetValues[lastDayOfYear].shares,
+                cost: r.assetValues[lastDayOfYear].cost + r.assetValues[lastDayOfYear].cost*PERCENTAGE_FEE  ,
+                averagePrice: (r.assetValues[lastDayOfYear].cost + r.assetValues[lastDayOfYear].cost*PERCENTAGE_FEE ) / r.assetValues[lastDayOfYear].shares,
                 return: r.assetValues[lastDayOfYear].return
             }
         }
