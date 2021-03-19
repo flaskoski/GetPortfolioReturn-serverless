@@ -8,27 +8,19 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 var PERCENTAGE_FEE= parseFloat(process.env.PERCENTAGE_FEE)
 var PERCENTAGE_TAX= parseFloat(process.env.PERCENTAGE_TAX)
 
-//-- Helper function used to validate input
-function checkDefined(reference, referenceName) {
-    if (!reference) {
-        throw new Error(`Error: ${referenceName} is not defined`);
-    }
-    return reference;
-}
-
 function checkInputs(event){
-    checkDefined(event["body"], "body");
+    utils.checkDefined(event["body"], "body");
     // console.info(event);
     let body = JSON.parse(event["body"]);
     // body = event["body"];
-    checkDefined(body["asset"], "asset");
+    utils.checkDefined(body["asset"], "asset");
     asset = body["asset"];
-    checkDefined(body["username"], "username");
+    utils.checkDefined(body["username"], "username");
     console.log(`asset:`); console.log(asset);
-    checkDefined(asset.code, "asset.Code");  checkDefined(asset.type, "asset.type");
-    checkDefined(body["transactions"], "transactions");
-    checkDefined(body["startDate"], "startDate");
-    checkDefined(body["endDate"], "endDate");
+    utils.checkDefined(asset.code, "asset.Code");  utils.checkDefined(asset.type, "asset.type");
+    utils.checkDefined(body["transactions"], "transactions");
+    utils.checkDefined(body["startDate"], "startDate");
+    utils.checkDefined(body["endDate"], "endDate");
     console.log("startDate:", body["startDate"]);
     console.log("endDate:", body["endDate"]);
     console.log("Number Transactions:", body["transactions"].length)
@@ -145,6 +137,7 @@ exports.calculateDailyReturns = function(transactions, startDate, endDate, quote
 //--get transactions and returns on the day
 function sumTransactionsFromDay(totals, transactions, currentQuote, date, beforeDate){
     let transactionsFromDay = getTransactionsFromDay(transactions, date, beforeDate)
+    // console.log(transactionsFromDay)
     transactionsFromDay.forEach(t =>{
         console.log(`New transaction: ${t.date} ${t.type} ${(!isDividends(t)? t.shares_number+" " : "")}${t.asset} $${t.price}`)
         if(t.type.toUpperCase() == "BUY"){
@@ -198,7 +191,7 @@ exports.saveValues = function(username, asset, values){
     const params = {
         TableName: process.env.DAILY_RETURN_TABLE,
         Key: {
-            'userId': username,            
+            'userId': username,
             'assetCode': asset.code
         },
         ExpressionAttributeNames: {

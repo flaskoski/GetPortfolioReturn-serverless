@@ -3,11 +3,7 @@ service: getportfolioreturn
 #app: SmartInvest
 #org: your-org-name
 
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
 frameworkVersion: '2'
-
-# securedVariables: ${file(./env.yml)}
 
 provider:
   name: aws
@@ -89,6 +85,7 @@ package:
    - main/test/**
    - getAssetReturn/test/**
    - currentQuote/test/**
+   - images/**
 
 functions:
   main:

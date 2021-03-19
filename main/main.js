@@ -6,6 +6,7 @@ const utils = require('../utils');
 module.exports.handler = function(event, context, callback){
     try{
         exports.main(event).then(allTotals => {
+            // console.log(allTotals)
             var response = {
                 statusCode: 200,
                 headers: {'Access-Control-Allow-Origin': '*'},
@@ -13,7 +14,6 @@ module.exports.handler = function(event, context, callback){
                     allTotals
                 ),
             };
-            // console.log(response)
             callback(null, response);
         })
     }catch(exception){
@@ -34,7 +34,6 @@ exports.main = function(event){
         end: new Date(body["endDate"] + " 15:00")
     }
     const username = body["username"]
-    console.log(dates)
     return exports.getValues(username, dates)
             .then(assetsReturns => getTotalReturn(assetsReturns, dates) )
 };
@@ -49,6 +48,7 @@ function checkInputs(event){
     utils.checkDefined(body["username"], "username");
     console.log("startDate:", body["startDate"]);
     console.log("endDate:", body["endDate"]);
+    console.log("username:", body["username"]);
     return body;
 }
 
@@ -81,7 +81,6 @@ function getTotalReturn(returns, dates){
     for(let day = dates.start; day <= dates.end; day.setDate(day.getDate() + 1)){
         if(day.getDay() == 0 || day.getDay()==6) continue;
         let dailyTotals = {cost: 0.0, return: 0.0, profit: 0.0}
-        // console.log(`day: ${day}`)
         let foundOne = false
         returns.forEach(r => {
             let assetValues = r.assetValues[utils.dateToString(day)]
@@ -96,7 +95,7 @@ function getTotalReturn(returns, dates){
         if(dailyTotals.cost > 0){
             dailyTotals.return /= dailyTotals.cost;
             allTotals[utils.dateToString(day)] = {...dailyTotals};
-            // console.log("return on", utils.dateToString(day), ":", allTotals[utils.dateToString(day)].return)
+            console.log("return on", utils.dateToString(day), ":", allTotals[utils.dateToString(day)].return)
         }
     }
     return allTotals;
