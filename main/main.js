@@ -78,26 +78,46 @@ exports.getValues = function(username, dates){
 }
 function getTotalReturn(returns, dates){
     let allTotals = {}
+    let lastDay = null;
     for(let day = dates.start; day <= dates.end; day.setDate(day.getDate() + 1)){
         if(day.getDay() == 0 || day.getDay()==6) continue;
-        let dailyTotals = {cost: 0.0, return: 0.0, profit: 0.0}
+        let dailyTotals = {cost: 0.0, return: 0.0, profit: 0.0, dividends: 0.0, jcp: 0.0}
         let foundOne = false
+        let assetsNotFound = []
+
         returns.forEach(r => {
             let assetValues = r.assetValues[utils.dateToString(day)]
             if(assetValues){
-                dailyTotals.cost += assetValues.cost;
-                dailyTotals.profit += assetValues.profit;
-                dailyTotals.return += assetValues.return * assetValues.cost;
-                foundOne = true
+                addToTotals(dailyTotals, assetValues);
+                foundOne = true;
             }
-            else if(foundOne) console.info("Values of", r.assetCode, "not available on day", utils.dateToString(day))
+            else assetsNotFound.push(r);
         })
+        if(foundOne){ 
+            if(lastDay)//if there was a valid day before, copy the assetValues from it
+                assetsNotFound.forEach(r => {
+                    let assetValues = r.assetValues[utils.dateToString(lastDay)]
+                    if(assetValues) 
+                        addToTotals(dailyTotals, assetValues);
+                }) 
+            console.info("Values of", assetsNotFound.map(r => r.assetCode+";"), "not available on day", utils.dateToString(day))
+        }
+
         if(dailyTotals.cost > 0){
             dailyTotals.return /= dailyTotals.cost;
             allTotals[utils.dateToString(day)] = {...dailyTotals};
             console.log("return on", utils.dateToString(day), ":", allTotals[utils.dateToString(day)].return)
         }
+        if(foundOne) lastDay = new Date(day);
     }
     return allTotals;
+}
+
+function addToTotals(dailyTotals, assetValues){
+    dailyTotals.cost += assetValues.cost;
+    dailyTotals.profit += assetValues.profit;
+    dailyTotals.return += assetValues.return * assetValues.cost;
+    dailyTotals.dividends += assetValues.dividends;
+    dailyTotals.jcp += assetValues.jcp;
 }
 

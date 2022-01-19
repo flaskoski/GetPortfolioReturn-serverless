@@ -14,3 +14,4 @@ getTotalsPerMonth/test/input.json
 
 #misc
 env.yml
+sls_version.txt

@@ -4,7 +4,7 @@
             "bdr": {"fees": 0, "profit": 0, "sales": 0}, 
             "reit": {"fees": 0, "profit": 0, "sales": 0}, 
             "stocks": { 
-                "fees": 1.5297468571428574,
+                "fees": 1.5297,
                 "profit": -141.82285714285672,
                 "sales": 2288
             }

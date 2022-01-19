@@ -172,7 +172,7 @@ resources:
           - AttributeName: assetCode
             KeyType: RANGE
         ProvisionedThroughput:
-          ReadCapacityUnits: 15
+          ReadCapacityUnits: 10
           WriteCapacityUnits: 5
         TableName: ${self:provider.environment.DAILY_RETURN_TABLE}
     MonthlyTotalsDynamoDbTable:
@@ -186,7 +186,7 @@ resources:
           - AttributeName: userId
             KeyType: HASH
         ProvisionedThroughput:
-          ReadCapacityUnits: 15
+          ReadCapacityUnits: 10
           WriteCapacityUnits: 5
         TableName: ${self:provider.environment.MONTHLY_TOTALS_TABLE}
     SmartInvestUsersApiGatewayAuthorizer:
